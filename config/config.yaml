@@ -1,0 +1,66 @@
+# ============================================
+# DermaVision Configuration
+# ============================================
+
+# Dataset
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  metadata_path: "data/metadata.csv"
+  image_size: 224
+  num_classes: 7
+  val_split: 0.10
+  test_split: 0.10
+  random_seed: 42
+
+# Model
+model:
+  architecture: "efficientnet_b3"
+  pretrained: true
+  dropout_rate: 0.3
+  num_classes: 7
+
+# Training (Two-Phase)
+training:
+  # Phase 1: Frozen backbone, train classifier head only
+  phase1_epochs: 5
+  # Phase 2: Unfreeze backbone, fine-tune entire model
+  phase2_epochs: 20
+  batch_size: 32
+  learning_rate: 0.0003  # 3e-4
+  weight_decay: 0.0001
+  optimizer: "adamw"
+  scheduler: "cosine"
+  num_workers: 4
+  pin_memory: true
+  mixed_precision: true
+
+# Loss
+loss:
+  type: "focal"
+  gamma: 2.0
+  alpha: null  # Auto-computed from class weights
+
+# Early Stopping
+early_stopping:
+  patience: 5
+  min_delta: 0.001
+  monitor: "val_auc"
+
+# Logging
+logging:
+  tensorboard_dir: "logs/tensorboard"
+  save_dir: "models"
+  log_interval: 10
+  save_best_only: true
+
+# Inference
+inference:
+  model_path: "models/best_model.pth"
+  confidence_threshold: 0.60
+  temperature_scaling: true
+
+# Grad-CAM
+gradcam:
+  target_layer: "backbone.conv_head"
+  colormap: "jet"

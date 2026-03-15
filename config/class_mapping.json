@@ -1,0 +1,72 @@
+{
+  "num_classes": 7,
+  "classes": {
+    "0": {
+      "abbreviation": "akiec",
+      "name": "Actinic Keratoses and Intraepithelial Carcinoma",
+      "description": "Pre-cancerous lesions that may develop into squamous cell carcinoma.",
+      "severity": "high",
+      "malignant": true
+    },
+    "1": {
+      "abbreviation": "bcc",
+      "name": "Basal Cell Carcinoma",
+      "description": "Most common type of skin cancer, rarely metastasizes.",
+      "severity": "high",
+      "malignant": true
+    },
+    "2": {
+      "abbreviation": "bkl",
+      "name": "Benign Keratosis",
+      "description": "Includes seborrheic keratoses, solar lentigo, and lichen planus-like keratoses.",
+      "severity": "low",
+      "malignant": false
+    },
+    "3": {
+      "abbreviation": "df",
+      "name": "Dermatofibroma",
+      "description": "Common benign skin nodule of unknown etiology.",
+      "severity": "low",
+      "malignant": false
+    },
+    "4": {
+      "abbreviation": "mel",
+      "name": "Melanoma",
+      "description": "Most dangerous form of skin cancer, develops from melanocytes.",
+      "severity": "critical",
+      "malignant": true
+    },
+    "5": {
+      "abbreviation": "nv",
+      "name": "Melanocytic Nevi",
+      "description": "Benign neoplasms of melanocytes (common moles).",
+      "severity": "low",
+      "malignant": false
+    },
+    "6": {
+      "abbreviation": "vasc",
+      "name": "Vascular Lesions",
+      "description": "Includes angiomas, angiokeratomas, pyogenic granulomas, and hemorrhage.",
+      "severity": "low",
+      "malignant": false
+    }
+  },
+  "class_to_idx": {
+    "akiec": 0,
+    "bcc": 1,
+    "bkl": 2,
+    "df": 3,
+    "mel": 4,
+    "nv": 5,
+    "vasc": 6
+  },
+  "idx_to_class": {
+    "0": "akiec",
+    "1": "bcc",
+    "2": "bkl",
+    "3": "df",
+    "4": "mel",
+    "5": "nv",
+    "6": "vasc"
+  }
+}

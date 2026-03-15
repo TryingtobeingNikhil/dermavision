@@ -1,0 +1,10 @@
+image_id,dx,dx_type,age,sex,localization,split
+# HAM10000 metadata will be populated by data download script
+# Columns:
+#   image_id   — Unique image identifier
+#   dx         — Diagnosis abbreviation (akiec, bcc, bkl, df, mel, nv, vasc)
+#   dx_type    — Diagnosis confirmation method (histo, follow_up, consensus, confocal)
+#   age        — Patient age
+#   sex        — Patient sex (male, female, unknown)
+#   localization — Body site of lesion
+#   split      — Dataset split (train, val, test)
