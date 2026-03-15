@@ -1,84 +1,183 @@
 """
-DermaVision — PyTorch Dataset for HAM10000 Skin Lesion Classification.
+HAM10000 PyTorch Dataset
 
-Handles image loading, label encoding, and augmentation pipeline integration.
+Handles:
+- Loading images from split folders
+- Label encoding
+- Train/val/test splits
+- Augmentation pipeline integration
 """
 
-import os
-
-import numpy as np
-import pandas as pd
-from PIL import Image
+import torch
 from torch.utils.data import Dataset
+from pathlib import Path
+from PIL import Image
+import pandas as pd
+import numpy as np
 
 
-class DermaDataset(Dataset):
-    """Custom PyTorch Dataset for HAM10000 dermatoscopic images.
-
+class HAM10000Dataset(Dataset):
+    """
+    PyTorch Dataset for HAM10000 skin lesion images.
+    
     Args:
-        metadata_df (pd.DataFrame): DataFrame with columns ['image_id', 'dx', 'split'].
-        image_dir (str): Path to directory containing images.
-        transform (callable, optional): Albumentations transform pipeline.
-        class_to_idx (dict, optional): Mapping from class abbreviation to index.
-
+        metadata_path: Path to metadata.csv
+        data_dir: Path to processed data directory
+        split: 'train', 'val', or 'test'
+        transform: Albumentations transform pipeline
+        
     Example:
-        >>> dataset = DermaDataset(
-        ...     metadata_df=train_df,
-        ...     image_dir="data/processed",
+        >>> from src.data.augmentations import get_train_transforms
+        >>> train_dataset = HAM10000Dataset(
+        ...     metadata_path='data/metadata.csv',
+        ...     data_dir='data/processed',
+        ...     split='train',
         ...     transform=get_train_transforms()
         ... )
-        >>> image, label = dataset[0]
     """
-
-    DEFAULT_CLASS_MAP = {
-        "akiec": 0, "bcc": 1, "bkl": 2, "df": 3,
-        "mel": 4, "nv": 5, "vasc": 6,
+    
+    # Class mapping (consistent ordering for model output)
+    CLASS_NAMES = {
+        'akiec': 0,  # Actinic keratoses
+        'bcc': 1,    # Basal cell carcinoma
+        'bkl': 2,    # Benign keratosis
+        'df': 3,     # Dermatofibroma
+        'mel': 4,    # Melanoma (our critical class!)
+        'nv': 5,     # Melanocytic nevi
+        'vasc': 6    # Vascular lesions
     }
-
+    
+    # Reverse mapping for predictions
+    IDX_TO_CLASS = {v: k for k, v in CLASS_NAMES.items()}
+    
+    # Full disease names for display
+    FULL_NAMES = {
+        'akiec': 'Actinic Keratoses',
+        'bcc': 'Basal Cell Carcinoma',
+        'bkl': 'Benign Keratosis',
+        'df': 'Dermatofibroma',
+        'mel': 'Melanoma',
+        'nv': 'Melanocytic Nevi',
+        'vasc': 'Vascular Lesions'
+    }
+    
     def __init__(
         self,
-        metadata_df: pd.DataFrame,
-        image_dir: str,
-        transform=None,
-        class_to_idx: dict | None = None,
+        metadata_path: str,
+        data_dir: str,
+        split: str = 'train',
+        transform=None
     ):
-        self.metadata = metadata_df.reset_index(drop=True)
-        self.image_dir = image_dir
+        """Initialize dataset."""
+        self.data_dir = Path(data_dir)
+        self.split = split
         self.transform = transform
-        self.class_to_idx = class_to_idx or self.DEFAULT_CLASS_MAP
-
-        # Pre-compute labels
-        self.labels = self.metadata["dx"].map(self.class_to_idx).values
-        self.image_ids = self.metadata["image_id"].values
-
+        
+        # Load metadata and filter by split
+        self.metadata = pd.read_csv(metadata_path)
+        self.data = self.metadata[self.metadata['split'] == split].reset_index(drop=True)
+        
+        # Image folders (check both part_1 and part_2)
+        self.image_folders = [
+            self.data_dir / 'HAM10000_images_part_1',
+            self.data_dir / 'HAM10000_images_part_2'
+        ]
+        
+        print(f"✅ Loaded {len(self.data)} {split} samples")
+        
+        # Print class distribution for this split
+        self._print_class_distribution()
+    
+    def _print_class_distribution(self):
+        """Print class distribution for this split."""
+        class_counts = self.data['dx'].value_counts()
+        print(f"\n📊 Class distribution ({self.split}):")
+        for cls, count in class_counts.items():
+            pct = (count / len(self.data) * 100)
+            print(f"   {cls:6s} ({self.FULL_NAMES[cls]:25s}): {count:4d} ({pct:5.2f}%)")
+    
+    def _load_image(self, image_id: str) -> Image.Image:
+        """
+        Load image from either part_1 or part_2 folder.
+        
+        Args:
+            image_id: Image ID (without .jpg extension)
+            
+        Returns:
+            PIL Image
+        """
+        img_name = f"{image_id}.jpg"
+        
+        # Check both folders
+        for folder in self.image_folders:
+            img_path = folder / img_name
+            if img_path.exists():
+                return Image.open(img_path).convert('RGB')
+        
+        raise FileNotFoundError(f"Image {img_name} not found in any folder")
+    
     def __len__(self) -> int:
-        return len(self.metadata)
-
-    def __getitem__(self, idx: int) -> tuple:
-        """Return (image_tensor, label) for a given index."""
-        image_id = self.image_ids[idx]
-        label = self.labels[idx]
-
+        """Return dataset size."""
+        return len(self.data)
+    
+    def __getitem__(self, idx: int) -> dict:
+        """
+        Get a single sample.
+        
+        Args:
+            idx: Sample index
+            
+        Returns:
+            Dictionary with 'image' (tensor) and 'label' (int)
+        """
+        # Get metadata for this sample
+        row = self.data.iloc[idx]
+        
         # Load image
-        img_path = os.path.join(self.image_dir, f"{image_id}.jpg")
-        image = np.array(Image.open(img_path).convert("RGB"))
-
-        # Apply augmentations
+        image = self._load_image(row['image_id'])
+        
+        # Convert to numpy for albumentations
+        image_np = np.array(image)
+        
+        # Apply transforms
         if self.transform:
-            augmented = self.transform(image=image)
-            image = augmented["image"]
-
-        return image, label
-
-    def get_class_weights(self) -> np.ndarray:
-        """Compute inverse-frequency class weights for imbalanced data."""
-        class_counts = np.bincount(self.labels, minlength=len(self.class_to_idx))
-        total = len(self.labels)
-        weights = total / (len(self.class_to_idx) * class_counts + 1e-6)
-        return weights / weights.sum() * len(self.class_to_idx)
-
-    def get_class_distribution(self) -> dict:
-        """Return class distribution as {class_name: count}."""
-        idx_to_class = {v: k for k, v in self.class_to_idx.items()}
-        counts = np.bincount(self.labels, minlength=len(self.class_to_idx))
-        return {idx_to_class[i]: int(c) for i, c in enumerate(counts)}
+            transformed = self.transform(image=image_np)
+            image_tensor = transformed['image']
+        else:
+            # If no transform, just convert to tensor
+            image_tensor = torch.from_numpy(image_np).permute(2, 0, 1).float() / 255.0
+        
+        # Get label
+        label = self.CLASS_NAMES[row['dx']]
+        
+        return {
+            'image': image_tensor,
+            'label': label,
+            'image_id': row['image_id']  # Useful for debugging
+        }
+    
+    def get_class_weights(self) -> torch.Tensor:
+        """
+        Calculate class weights for handling imbalance.
+        
+        Uses inverse frequency weighting:
+        weight[i] = total_samples / (num_classes * class_count[i])
+        
+        Returns:
+            Tensor of shape [num_classes] with weights
+        """
+        class_counts = self.data['dx'].value_counts()
+        num_classes = len(self.CLASS_NAMES)
+        total_samples = len(self.data)
+        
+        # Calculate weights
+        weights = torch.zeros(num_classes)
+        for cls, count in class_counts.items():
+            cls_idx = self.CLASS_NAMES[cls]
+            weights[cls_idx] = total_samples / (num_classes * count)
+        
+        print(f"\n⚖️  Class weights ({self.split}):")
+        for cls, idx in self.CLASS_NAMES.items():
+            print(f"   {cls:6s}: {weights[idx]:.3f}")
+        
+        return weights

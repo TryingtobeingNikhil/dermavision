@@ -1,3 +1,5 @@
-from .cnn_model import DermaModel, create_model
-from .loss import FocalLoss
-from .metrics import compute_metrics
+"""Models package."""
+
+from .cnn_model import SkinLesionClassifier, create_model
+
+__all__ = ['SkinLesionClassifier', 'create_model']

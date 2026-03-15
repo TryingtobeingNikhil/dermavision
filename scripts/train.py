@@ -1,158 +1,158 @@
 """
-DermaVision — Training Script.
+Main training script.
 
-Entry point for two-phase model training:
-  Phase 1: Freeze backbone → train classifier head (5 epochs)
-  Phase 2: Unfreeze backbone → fine-tune entire model (20 epochs)
+Usage:
+    python scripts/train.py
 """
 
-import argparse
 import sys
-import os
+from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 import torch
+import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
+from src.data.augmentations import get_train_transforms, get_valid_transforms
 from src.data.dataloader import create_dataloaders
 from src.models.cnn_model import create_model
-from src.models.loss import FocalLoss
-from src.training.callbacks import EarlyStopping
+from src.models.loss import create_loss_function
 from src.training.trainer import Trainer
-from src.training.utils import load_config, seed_everything, get_device, count_parameters
 
 
 def main():
-    parser = argparse.ArgumentParser(description="DermaVision Training")
-    parser.add_argument("--config", type=str, default="config/config.yaml",
-                        help="Path to config file")
-    parser.add_argument("--phase1_epochs", type=int, default=None,
-                        help="Override Phase 1 epochs (frozen backbone)")
-    parser.add_argument("--phase2_epochs", type=int, default=None,
-                        help="Override Phase 2 epochs (fine-tune)")
-    parser.add_argument("--batch_size", type=int, default=None,
-                        help="Override batch size")
-    parser.add_argument("--lr", type=float, default=None,
-                        help="Override learning rate")
-    parser.add_argument("--device", type=str, default="auto",
-                        help="Device (auto, cuda, mps, cpu)")
-    args = parser.parse_args()
-
-    # Load config
-    config = load_config(args.config)
-
-    # Override with CLI arguments
-    if args.phase1_epochs:
-        config["training"]["phase1_epochs"] = args.phase1_epochs
-    if args.phase2_epochs:
-        config["training"]["phase2_epochs"] = args.phase2_epochs
-    if args.batch_size:
-        config["training"]["batch_size"] = args.batch_size
-    if args.lr:
-        config["training"]["learning_rate"] = args.lr
-
-    phase1_epochs = config["training"]["phase1_epochs"]
-    phase2_epochs = config["training"]["phase2_epochs"]
-
-    # Reproducibility
-    seed_everything(config["data"]["random_seed"])
-
-    # Device
-    device = get_device(args.device)
-
-    print("\n🔬 DermaVision Training Pipeline")
-    print("=" * 60)
-    print(f"   Phase 1: {phase1_epochs} epochs (frozen backbone → classifier head)")
-    print(f"   Phase 2: {phase2_epochs} epochs (full fine-tune)")
-
-    # Data
-    print("\n📦 Loading data...")
-    dataloaders = create_dataloaders(
-        metadata_path=config["data"]["metadata_path"],
-        image_dir=config["data"]["processed_dir"],
-        batch_size=config["training"]["batch_size"],
-        image_size=config["data"]["image_size"],
-        num_workers=config["training"]["num_workers"],
-    )
-    print(f"   Train: {len(dataloaders['train'].dataset):,} samples")
-    print(f"   Val:   {len(dataloaders['val'].dataset):,} samples")
-    print(f"   Test:  {len(dataloaders['test'].dataset):,} samples")
-
-    # Model
-    print("\n🧠 Building model...")
-    model = create_model(
-        num_classes=config["model"]["num_classes"],
-        pretrained=config["model"]["pretrained"],
-        dropout_rate=config["model"]["dropout_rate"],
-        device=str(device),
-    )
-    params = count_parameters(model)
-    print(f"   Architecture:     EfficientNet-B3")
-    print(f"   Total params:     {params['total']:,}")
-    print(f"   Trainable params: {params['trainable']:,}")
-    print(f"   Model size:       {params['total_mb']:.1f} MB")
-
-    # Loss function with class weights
-    train_dataset = dataloaders["train"].dataset
-    class_weights = torch.tensor(
-        train_dataset.get_class_weights(), dtype=torch.float32
-    ).to(device)
-    criterion = FocalLoss(
-        gamma=config["loss"]["gamma"],
-        alpha=class_weights,
-    )
-    print(f"\n📉 Loss: Focal Loss (γ={config['loss']['gamma']})")
-
-    # Optimizer: AdamW with lr=3e-4
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=config["training"]["learning_rate"],
-        weight_decay=config["training"]["weight_decay"],
-    )
-    print(f"   Optimizer: AdamW (lr={config['training']['learning_rate']})")
-
-    # Scheduler: CosineAnnealingLR (resets per phase inside trainer)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer,
-        T_max=phase1_epochs,  # Phase 1 initially; trainer resets for Phase 2
-        eta_min=1e-7,
-    )
-
-    # Callbacks
-    callbacks = [
-        EarlyStopping(
-            patience=config["early_stopping"]["patience"],
-            min_delta=config["early_stopping"]["min_delta"],
-        ),
-    ]
-    print(f"   Early Stopping: patience={config['early_stopping']['patience']}")
-
-    # Train (two-phase)
-    trainer_config = {
-        **config["training"],
-        **config["logging"],
+    """Main training function."""
+    
+    # Device setup
+    if torch.backends.mps.is_available():
+        device = 'mps'
+    elif torch.cuda.is_available():
+        device = 'cuda'
+    else:
+        device = 'cpu'
+    
+    print(f"Using device: {device}")
+    
+    # Hyperparameters
+    config = {
+        'batch_size': 32,
+        'num_epochs': 25,
+        'learning_rate': 3e-4,
+        'weight_decay': 1e-4,
+        'patience': 7,
+        'image_size': 224,
+        'num_workers': 2,
+        'use_weighted_sampling': True,
+        'loss_type': 'focal',
+        'focal_gamma': 2.0,
     }
+    
+    print("\nConfiguration:")
+    for k, v in config.items():
+        print(f"  {k}: {v}")
+    
+    # Create dataloaders
+    loaders = create_dataloaders(
+        metadata_path='data/metadata.csv',
+        data_dir='data/processed',
+        train_transform=get_train_transforms(image_size=config['image_size']),
+        valid_transform=get_valid_transforms(image_size=config['image_size']),
+        batch_size=config['batch_size'],
+        use_weighted_sampling=config['use_weighted_sampling'],
+        num_workers=config['num_workers']
+    )
+    
+    train_loader = loaders['train']
+    val_loader = loaders['val']
+    train_dataset = loaders['datasets']['train']
+    
+    # Create model
+    model = create_model(
+        num_classes=7,
+        pretrained=True,
+        dropout=0.3,
+        freeze_backbone=True,  # Start with frozen backbone
+        device=device
+    )
+    
+    # Get class weights
+    class_weights = train_dataset.get_class_weights().to(device)
+    
+    # Create loss function
+    criterion = create_loss_function(
+        loss_type=config['loss_type'],
+        class_weights=class_weights,
+        gamma=config['focal_gamma']
+    )
+    
+    # Optimizer
+    optimizer = optim.AdamW(
+        model.parameters(),
+        lr=config['learning_rate'],
+        weight_decay=config['weight_decay']
+    )
+    
+    # Learning rate scheduler
+    scheduler = CosineAnnealingLR(
+        optimizer,
+        T_max=config['num_epochs'],
+        eta_min=1e-6
+    )
+    
+    # Create trainer
     trainer = Trainer(
         model=model,
         criterion=criterion,
         optimizer=optimizer,
-        scheduler=scheduler,
-        device=str(device),
-        config=trainer_config,
-        callbacks=callbacks,
+        device=device,
+        checkpoint_dir='models',
+        log_dir='logs'
     )
-
-    history = trainer.fit(
-        train_loader=dataloaders["train"],
-        val_loader=dataloaders["val"],
-        phase1_epochs=phase1_epochs,
-        phase2_epochs=phase2_epochs,
+    
+    # Phase 1: Train only classifier head
+    print("\n" + "="*60)
+    print("PHASE 1: Training classifier head only (5 epochs)")
+    print("="*60)
+    
+    trainer.fit(
+        train_loader=train_loader,
+        val_loader=val_loader,
+        epochs=5,
+        patience=config['patience'],
+        scheduler=scheduler
     )
+    
+    # Phase 2: Unfreeze and fine-tune full model
+    print("\n" + "="*60)
+    print("PHASE 2: Fine-tuning full model")
+    print("="*60)
+    
+    model.unfreeze_backbone()
+    
+    # Lower learning rate for fine-tuning
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = 1e-5
+    
+    # Reset scheduler
+    scheduler = CosineAnnealingLR(
+        optimizer,
+        T_max=config['num_epochs'] - 5,
+        eta_min=1e-7
+    )
+    
+    trainer.fit(
+        train_loader=train_loader,
+        val_loader=val_loader,
+        epochs=config['num_epochs'] - 5,
+        patience=config['patience'],
+        scheduler=scheduler
+    )
+    
+    print("\n🎉 Training complete! Check the 'models/' directory for checkpoints.")
 
-    print(f"\n   Model saved to: models/best_model.pth")
-    print(f"   Run evaluation: python scripts/evaluate.py\n")
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

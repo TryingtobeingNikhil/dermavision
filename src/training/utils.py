@@ -1,104 +1,61 @@
 """
-DermaVision — Training Utilities.
-
-Helper functions for reproducibility, configuration loading,
-and device management.
+Training utilities.
 """
 
-import json
-import os
-import random
-
-import numpy as np
 import torch
-import yaml
+import random
+import numpy as np
 
 
-def seed_everything(seed: int = 42) -> None:
-    """Set random seeds for full reproducibility.
-
+def set_seed(seed: int = 42):
+    """
+    Set random seed for reproducibility.
+    
     Args:
-        seed: Random seed value.
+        seed: Random seed value
     """
     random.seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    
+    # Make cudnn deterministic (slower but reproducible)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+    
+    print(f"🎲 Random seed set to {seed}")
 
 
-def load_config(config_path: str = "config/config.yaml") -> dict:
-    """Load YAML configuration file.
+def count_parameters(model):
+    """Count trainable parameters."""
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-    Args:
-        config_path: Path to the YAML config file.
 
-    Returns:
-        Configuration dictionary.
+def load_checkpoint(model, checkpoint_path, device='cpu'):
     """
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
-    return config
-
-
-def load_class_mapping(mapping_path: str = "config/class_mapping.json") -> dict:
-    """Load class mapping from JSON file.
-
+    Load model from checkpoint.
+    
     Args:
-        mapping_path: Path to class_mapping.json.
-
+        model: Model instance
+        checkpoint_path: Path to checkpoint file
+        device: Device to load to
+        
     Returns:
-        Class mapping dictionary.
+        model, epoch, metrics
     """
-    with open(mapping_path, "r") as f:
-        mapping = json.load(f)
-    return mapping
-
-
-def get_device(preferred: str = "auto") -> torch.device:
-    """Get the best available compute device.
-
-    Args:
-        preferred: Preferred device ('auto', 'cuda', 'mps', 'cpu').
-
-    Returns:
-        torch.device instance.
-    """
-    if preferred == "auto":
-        if torch.cuda.is_available():
-            device = torch.device("cuda")
-            print(f"  🖥  Using CUDA: {torch.cuda.get_device_name(0)}")
-        elif torch.backends.mps.is_available():
-            device = torch.device("mps")
-            print("  🍎 Using Apple MPS")
-        else:
-            device = torch.device("cpu")
-            print("  💻 Using CPU")
-    else:
-        device = torch.device(preferred)
-
-    return device
-
-
-def count_parameters(model: torch.nn.Module) -> dict:
-    """Count model parameters.
-
-    Args:
-        model: PyTorch model.
-
-    Returns:
-        Dictionary with total, trainable, and frozen parameter counts.
-    """
-    total = sum(p.numel() for p in model.parameters())
-    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    frozen = total - trainable
-
-    return {
-        "total": total,
-        "trainable": trainable,
-        "frozen": frozen,
-        "total_mb": total * 4 / (1024 ** 2),  # Approximate size in MB (float32)
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    
+    epoch = checkpoint.get('epoch', 0)
+    metrics = {
+        'best_val_loss': checkpoint.get('best_val_loss', float('inf')),
+        'best_val_f1': checkpoint.get('best_val_f1', 0.0)
     }
+    
+    print(f"✅ Loaded checkpoint from epoch {epoch}")
+    print(f"   Best val F1: {metrics['best_val_f1']:.4f}")
+    
+    return model, epoch, metrics

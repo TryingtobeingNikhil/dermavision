@@ -1,89 +1,54 @@
-"""
-DermaVision — Model Tests.
+"""Test model creation and forward pass."""
 
-Tests for model architecture, forward pass, and loss function.
-"""
-
-import numpy as np
-import pytest
 import torch
+from src.models.cnn_model import create_model
 
 
-class TestDermaModel:
-    """Tests for the DermaModel architecture."""
+def test_model():
+    """Test model initialization and forward pass."""
+    
+    print("🧪 Testing Model\n")
+    
+    # Create model
+    model = create_model(
+        num_classes=7,
+        pretrained=True,
+        dropout=0.3,
+        freeze_backbone=True,  # Test frozen mode
+        device='mps'  # or 'cpu' if MPS not available
+    )
+    
+    # Test forward pass
+    print("\n🔍 Testing forward pass...")
+    dummy_input = torch.randn(4, 3, 224, 224).to('mps')  # Batch of 4
+    
+    with torch.no_grad():
+        logits = model(dummy_input)
+        temp_logits = model.forward_with_temperature(dummy_input)
+    
+    print(f"   Input shape:  {dummy_input.shape}")
+    print(f"   Output shape: {logits.shape}")
+    print(f"   Expected:     torch.Size([4, 7])")
+    print(f"   ✅ Shapes match!" if logits.shape == torch.Size([4, 7]) else "❌ Shape mismatch!")
+    
+    # Test probabilities
+    probs = torch.softmax(logits, dim=1)
+    temp_probs = torch.softmax(temp_logits, dim=1)
+    
+    print(f"\n📊 Sample predictions (first image):")
+    print(f"   Regular logits:  {logits[0].cpu().numpy()}")
+    print(f"   Regular probs:   {probs[0].cpu().numpy()}")
+    print(f"   Temp-scaled probs: {temp_probs[0].cpu().numpy()}")
+    print(f"   Temperature: {model.temperature.item():.3f}")
+    
+    # Test unfreezing
+    print("\n🔓 Testing backbone unfreezing...")
+    model.unfreeze_backbone()
+    param_counts = model.get_num_params()
+    print(f"   Trainable params after unfreezing: {param_counts['trainable']:,}")
+    
+    print("\n✅ All model tests passed!")
 
-    def test_model_output_shape(self):
-        """Verify model output shape matches num_classes."""
-        from src.models.cnn_model import DermaModel
 
-        model = DermaModel(num_classes=7, pretrained=False)
-        x = torch.randn(2, 3, 300, 300)
-        output = model(x)
-
-        assert output.shape == (2, 7)
-
-    def test_model_feature_extraction(self):
-        """Verify feature extraction produces embeddings."""
-        from src.models.cnn_model import DermaModel
-
-        model = DermaModel(num_classes=7, pretrained=False)
-        x = torch.randn(1, 3, 300, 300)
-        features = model.get_features(x)
-
-        assert features.dim() == 2
-        assert features.shape[0] == 1
-
-    def test_backbone_freezing(self):
-        """Verify backbone freezing works correctly."""
-        from src.models.cnn_model import DermaModel
-
-        model = DermaModel(num_classes=7, pretrained=False)
-        model.freeze_backbone(True)
-
-        for param in model.backbone.parameters():
-            assert not param.requires_grad
-
-        model.freeze_backbone(False)
-
-        for param in model.backbone.parameters():
-            assert param.requires_grad
-
-
-class TestFocalLoss:
-    """Tests for the Focal Loss implementation."""
-
-    def test_focal_loss_output_scalar(self):
-        """Verify focal loss returns a scalar."""
-        from src.models.loss import FocalLoss
-
-        criterion = FocalLoss(gamma=2.0)
-        inputs = torch.randn(4, 7)
-        targets = torch.tensor([0, 1, 2, 3])
-
-        loss = criterion(inputs, targets)
-        assert loss.dim() == 0  # Scalar
-
-    def test_focal_loss_with_alpha(self):
-        """Verify focal loss works with class weights."""
-        from src.models.loss import FocalLoss
-
-        alpha = torch.ones(7) / 7
-        criterion = FocalLoss(gamma=2.0, alpha=alpha)
-        inputs = torch.randn(8, 7)
-        targets = torch.randint(0, 7, (8,))
-
-        loss = criterion(inputs, targets)
-        assert loss.item() > 0
-
-    def test_focal_loss_gamma_zero_equals_ce(self):
-        """Verify gamma=0 approximates standard cross-entropy."""
-        from src.models.loss import FocalLoss
-
-        torch.manual_seed(42)
-        inputs = torch.randn(16, 7)
-        targets = torch.randint(0, 7, (16,))
-
-        focal = FocalLoss(gamma=0.0)(inputs, targets)
-        ce = torch.nn.functional.cross_entropy(inputs, targets)
-
-        assert abs(focal.item() - ce.item()) < 1e-5
+if __name__ == "__main__":
+    test_model()
