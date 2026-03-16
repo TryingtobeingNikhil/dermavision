@@ -227,7 +227,7 @@ export function Scanner() {
                   <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-scanner-sweep" aria-hidden="true" />
                   <Loader2 className="w-10 h-10 animate-spin text-cyan-400 mb-3" />
                   <p className="text-sm text-slate-300 font-medium" role="status" aria-live="polite">
-                    Analyzing image…
+                    Processing image...
                   </p>
                 </div>
               )}
