@@ -58,7 +58,7 @@ class SkinLesionPredictor:
         self.idx_to_class = HAM10000Dataset.IDX_TO_CLASS
         self.class_names = HAM10000Dataset.FULL_NAMES
         
-        print(f"✅ Predictor initialized")
+        print(f"Predictor initialized")
         print(f"   Device: {device}")
         print(f"   Confidence threshold: {confidence_threshold}")
     
