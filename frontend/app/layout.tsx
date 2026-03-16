@@ -23,7 +23,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DermaVision — AI-Powered Skin Lesion Analysis",
+  title: "DermaVision - AI-Powered Skin Lesion Analysis",
   description:
     "Clinical-grade AI skin lesion classification powered by EfficientNet-B3 trained on the HAM10000 dataset. Get instant, explainable diagnostic insights.",
   keywords: [
