@@ -14,7 +14,7 @@ export function cn(...inputs: ClassValue[]) {
 
 // ── Number formatting ──────────────────────────────────────────
 
-/** Format 0.856 → "85.6%" */
+/** Format 0.856 - "85.6%" */
 export function formatPercent(value: number, decimals = 1): string {
   return `${(value * 100).toFixed(decimals)}%`;
 }
