@@ -1,5 +1,5 @@
 """
-DermaVision — Visualization Utilities.
+DermaVision - Visualization Utilities.
 
 Training curves, confusion matrices, and class distribution plots
 for model analysis and reporting.
