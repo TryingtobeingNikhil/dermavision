@@ -61,11 +61,11 @@ class MetricsCalculator:
             targets: Ground truth labels [batch_size]
             probabilities: Class probabilities [batch_size, num_classes] (optional)
         """
-        self.all_predictions.extend(predictions.cpu().numpy())
-        self.all_targets.extend(targets.cpu().numpy())
+        self.all_predictions.extend(predictions.detach().cpu().numpy())
+        self.all_targets.extend(targets.detach().cpu().numpy())
         
         if probabilities is not None:
-            self.all_probabilities.extend(probabilities.cpu().numpy())
+            self.all_probabilities.extend(probabilities.detach().cpu().numpy())
     
     def compute(self) -> Dict[str, float]:
         """
