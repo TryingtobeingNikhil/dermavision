@@ -18,7 +18,7 @@ from ml.src.data.dataloader import create_dataloaders
 def test_pipeline():
     """Test data pipeline and visualize batches."""
     
-    print("🧪 Testing Complete Data Pipeline\n")
+    print("Testing Complete Data Pipeline\n")
     
     # Create dataloaders
     loaders = create_dataloaders(
