@@ -10,7 +10,7 @@ from ml.src.data.dataset import HAM10000Dataset
 from ml.src.data.augmentations import get_train_transforms, get_valid_transforms
 
 # Test loading
-print("🧪 Testing Dataset Loading...\n")
+print("Testing Dataset Loading...\n")
 
 # Load train dataset
 train_dataset = HAM10000Dataset(
