@@ -67,7 +67,7 @@ async def startup_event():
         confidence_threshold=0.60
     )
     
-    print(f"✅ Model loaded on {device}")
+    print(f"Model loaded on {device}")
 
 
 @app.get("/")
