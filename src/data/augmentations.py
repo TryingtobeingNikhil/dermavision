@@ -32,7 +32,6 @@ def get_train_transforms(image_size=224):
             translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
             scale=(0.85, 1.15),
             rotate=(-45, 45),
-            mode=cv2.BORDER_CONSTANT,
             p=0.5
         ),
         
