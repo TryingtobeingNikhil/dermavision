@@ -1,4 +1,4 @@
-# 🔬 DermaVision — AI-Powered Skin Lesion Classification
+# DermaVision — AI-Powered Skin Lesion Classification
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12-blue.svg" alt="Python">
