@@ -28,11 +28,11 @@ def get_train_transforms(image_size=224):
         A.RandomRotate90(p=0.5),
         A.HorizontalFlip(p=0.5),
         A.VerticalFlip(p=0.5),
-        A.ShiftScaleRotate(
-            shift_limit=0.1,      # Slight position shifts
-            scale_limit=0.15,     # Zoom in/out
-            rotate_limit=45,      # Random rotation
-            border_mode=cv2.BORDER_CONSTANT,
+        A.Affine(
+            translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
+            scale=(0.85, 1.15),
+            rotate=(-45, 45),
+            mode=cv2.BORDER_CONSTANT,
             p=0.5
         ),
         
@@ -49,12 +49,15 @@ def get_train_transforms(image_size=224):
             p=0.4
         ),
         
+        # Gaussian noise for robustness
+        A.GaussNoise(std_range=(0.01, 0.05), p=0.3),
+        
         # Simulate hair occlusions (common in dermoscopy)
         A.CoarseDropout(
-            max_holes=8,
-            max_height=8,
-            max_width=8,
-            fill_value=0,
+            num_holes_range=(1, 8),
+            hole_height_range=(4, 8),
+            hole_width_range=(4, 8),
+            fill=0,
             p=0.3
         ),
         

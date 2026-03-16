@@ -5,6 +5,7 @@ Handles training, validation, checkpointing, and logging.
 """
 
 import torch
+from torch.amp import autocast, GradScaler
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from pathlib import Path
@@ -35,12 +36,17 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         device: str,
         checkpoint_dir: str = 'models',
-        log_dir: str = 'logs'
+        log_dir: str = 'logs',
+        use_amp: bool = False
     ):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
         self.device = device
+        
+        # Mixed precision training (AMP)
+        self.use_amp = use_amp and device == 'cuda'
+        self.scaler = GradScaler('cuda', enabled=self.use_amp)
         
         # Create directories
         self.checkpoint_dir = Path(checkpoint_dir)
@@ -63,6 +69,7 @@ class Trainer:
         
         print("✅ Trainer initialized")
         print(f"   Device: {device}")
+        print(f"   Mixed Precision: {'✅ Enabled' if self.use_amp else '❌ Disabled'}")
         print(f"   Checkpoints: {self.checkpoint_dir}")
         print(f"   Logs: {self.log_dir}")
     
@@ -83,14 +90,16 @@ class Trainer:
             images = batch['image'].to(self.device)
             labels = batch['label'].to(self.device)
             
-            # Forward pass
+            # Forward pass with AMP
             self.optimizer.zero_grad()
-            outputs = self.model(images)
-            loss = self.criterion(outputs, labels)
+            with autocast('cuda', enabled=self.use_amp):
+                outputs = self.model(images)
+                loss = self.criterion(outputs, labels)
             
-            # Backward pass
-            loss.backward()
-            self.optimizer.step()
+            # Backward pass with gradient scaling
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
             
             # Track metrics
             running_loss += loss.item() * images.size(0)
@@ -130,8 +139,9 @@ class Trainer:
                 images = batch['image'].to(self.device)
                 labels = batch['label'].to(self.device)
                 
-                outputs = self.model(images)
-                loss = self.criterion(outputs, labels)
+                with autocast('cuda', enabled=self.use_amp):
+                    outputs = self.model(images)
+                    loss = self.criterion(outputs, labels)
                 
                 running_loss += loss.item() * images.size(0)
                 

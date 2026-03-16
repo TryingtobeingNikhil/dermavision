@@ -41,16 +41,19 @@ class FocalLoss(nn.Module):
         self,
         alpha: torch.Tensor = None,
         gamma: float = 2.0,
+        label_smoothing: float = 0.0,
         reduction: str = 'mean'
     ):
         super().__init__()
         self.alpha = alpha
         self.gamma = gamma
+        self.label_smoothing = label_smoothing
         self.reduction = reduction
         
         print(f"✅ Focal Loss initialized:")
         print(f"   Gamma: {gamma}")
         print(f"   Alpha (class weights): {'Enabled' if alpha is not None else 'Disabled'}")
+        print(f"   Label smoothing: {label_smoothing}")
         print(f"   Reduction: {reduction}")
     
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
@@ -64,8 +67,11 @@ class FocalLoss(nn.Module):
         Returns:
             Loss scalar
         """
-        # Compute cross entropy
-        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        # Compute cross entropy (with optional label smoothing)
+        ce_loss = F.cross_entropy(
+            inputs, targets, reduction='none',
+            label_smoothing=self.label_smoothing
+        )
         
         # Get probabilities
         probs = torch.softmax(inputs, dim=1)
@@ -136,7 +142,8 @@ class WeightedCrossEntropyLoss(nn.Module):
 def create_loss_function(
     loss_type: str = 'focal',
     class_weights: torch.Tensor = None,
-    gamma: float = 2.0
+    gamma: float = 2.0,
+    label_smoothing: float = 0.0
 ) -> nn.Module:
     """
     Factory function to create loss function.
@@ -145,12 +152,13 @@ def create_loss_function(
         loss_type: 'focal' or 'weighted_ce'
         class_weights: Class weights from dataset
         gamma: Focal loss gamma parameter
+        label_smoothing: Label smoothing factor (0.0 = no smoothing)
         
     Returns:
         Loss function module
     """
     if loss_type == 'focal':
-        return FocalLoss(alpha=class_weights, gamma=gamma)
+        return FocalLoss(alpha=class_weights, gamma=gamma, label_smoothing=label_smoothing)
     elif loss_type == 'weighted_ce':
         return WeightedCrossEntropyLoss(weight=class_weights)
     else:

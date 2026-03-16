@@ -38,16 +38,38 @@ def main():
     
     # Hyperparameters
     config = {
-        'batch_size': 32,
-        'num_epochs': 25,
-        'learning_rate': 3e-4,
-        'weight_decay': 1e-4,
-        'patience': 7,
-        'image_size': 224,
-        'num_workers': 2,
-        'use_weighted_sampling': True,
-        'loss_type': 'focal',
-        'focal_gamma': 2.0,
+        # Data
+        "image_size": 256,
+        "batch_size": 64,
+        "num_workers": 4,
+
+        # Training
+        "num_epochs": 35,
+        "learning_rate": 3e-4,
+        "weight_decay": 1e-4,
+
+        # Loss (for class imbalance)
+        "loss_type": "focal",
+        "focal_gamma": 2.0,
+        "label_smoothing": 0.1,
+
+        # Sampling
+        "use_weighted_sampling": True,
+
+        # Early stopping
+        "patience": 10,
+
+        # LR Scheduler
+        "scheduler": "ReduceLROnPlateau",
+        "lr_factor": 0.3,
+        "lr_patience": 3,
+
+        # Model
+        "model_name": "efficientnet_b3",
+        "pretrained": True,
+
+        # Mixed precision (auto-disabled on non-CUDA)
+        "use_amp": True,
     }
     
     print("\nConfiguration:")
@@ -85,7 +107,8 @@ def main():
     criterion = create_loss_function(
         loss_type=config['loss_type'],
         class_weights=class_weights,
-        gamma=config['focal_gamma']
+        gamma=config['focal_gamma'],
+        label_smoothing=config['label_smoothing']
     )
     
     # Optimizer
@@ -109,7 +132,8 @@ def main():
         optimizer=optimizer,
         device=device,
         checkpoint_dir='models',
-        log_dir='logs'
+        log_dir='logs',
+        use_amp=config['use_amp']
     )
     
     # Phase 1: Train only classifier head
@@ -134,7 +158,7 @@ def main():
     
     # Lower learning rate for fine-tuning
     for param_group in optimizer.param_groups:
-        param_group['lr'] = 1e-5
+        param_group['lr'] = 5e-5
     
     # Reset scheduler
     scheduler = CosineAnnealingLR(
