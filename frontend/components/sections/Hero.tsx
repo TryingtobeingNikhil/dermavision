@@ -85,7 +85,7 @@ export function Hero() {
           )}
         >
           Upload a dermatoscopic image and get instant, explainable AI
-          classification across 7 skin conditions — powered by EfficientNet-B3 and
+          classification across 7 skin conditions - powered by EfficientNet-B3 and
           the HAM10000 dataset.
         </p>
 
