@@ -67,7 +67,7 @@ class Trainer:
         # Early stopping
         self.patience_counter = 0
         
-        print("✅ Trainer initialized")
+        print("Trainer initialized")
         print(f"   Device: {device}")
         print(f"   Mixed Precision: {'✅ Enabled' if self.use_amp else '❌ Disabled'}")
         print(f"   Checkpoints: {self.checkpoint_dir}")
