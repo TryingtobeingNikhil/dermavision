@@ -31,7 +31,7 @@ def download_ham10000():
     raw_dir.mkdir(parents=True, exist_ok=True)
     processed_dir.mkdir(parents=True, exist_ok=True)
     
-    print("📦 Downloading HAM10000 dataset from Kaggle...")
+    print("Downloading HAM10000 dataset from Kaggle...")
     print("This may take 5-10 minutes depending on your connection.\n")
     
     # Kaggle dataset identifier
