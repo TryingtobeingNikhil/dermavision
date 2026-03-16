@@ -36,7 +36,7 @@ def main():
     config = load_config(args.config)
     device = get_device(args.device)
 
-    print("\n🔬 DermaVision Evaluation")
+    print("\nDermaVision Evaluation")
     print("=" * 60)
 
     # Load data
