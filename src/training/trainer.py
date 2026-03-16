@@ -104,7 +104,7 @@ class Trainer:
             # Track metrics
             running_loss += loss.item() * images.size(0)
             
-            probs = torch.softmax(outputs, dim=1)
+            probs = torch.softmax(outputs.float(), dim=1)
             preds = torch.argmax(probs, dim=1)
             
             metrics_calc.update(preds, labels, probs)
@@ -145,7 +145,7 @@ class Trainer:
                 
                 running_loss += loss.item() * images.size(0)
                 
-                probs = torch.softmax(outputs, dim=1)
+                probs = torch.softmax(outputs.float(), dim=1)
                 preds = torch.argmax(probs, dim=1)
                 
                 metrics_calc.update(preds, labels, probs)
