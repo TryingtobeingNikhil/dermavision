@@ -10,7 +10,7 @@ BASE_URL = "http://localhost:8000"
 
 def test_health():
     """Test health endpoint."""
-    print("🧪 Testing /health endpoint...")
+    print("Testing /health endpoint...")
     response = requests.get(f"{BASE_URL}/health")
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
@@ -19,7 +19,7 @@ def test_health():
 
 def test_model_info():
     """Test model info endpoint."""
-    print("🧪 Testing /model-info endpoint...")
+    print("Testing /model-info endpoint...")
     response = requests.get(f"{BASE_URL}/model-info")
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
@@ -28,7 +28,7 @@ def test_model_info():
 
 def test_predict():
     """Test prediction endpoint."""
-    print("🧪 Testing /predict endpoint...")
+    print("Testing /predict endpoint...")
     
     # Find a test image
     test_image = Path("data/processed/HAM10000_images_part_1").glob("*.jpg").__next__()
@@ -66,4 +66,4 @@ if __name__ == '__main__':
     test_model_info()
     test_predict()
     
-    print("✅ All API tests complete!")
+    print("All API tests complete!")
