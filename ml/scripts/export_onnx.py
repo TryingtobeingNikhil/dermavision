@@ -38,7 +38,7 @@ def export_to_onnx(
         opset_version: ONNX opset version.
         verify: Whether to verify the exported model.
     """
-    print("\n🔬 DermaVision ONNX Export")
+    print("\nDermaVision ONNX Export")
     print("=" * 60)
 
     # Load model
