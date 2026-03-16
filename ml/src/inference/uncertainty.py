@@ -116,7 +116,7 @@ def calibrate_model(
     """
     temp_scaling = TemperatureScaling()
     optimal_temp = temp_scaling.calibrate(model, val_loader, device)
-    print(f"  🌡  Optimal temperature: {optimal_temp:.4f}")
+    print(f"  Optimal temperature: {optimal_temp:.4f}")
     return temp_scaling
 
 
