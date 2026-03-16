@@ -1,7 +1,13 @@
 """Quick test of the dataset class."""
 
-from src.data.dataset import HAM10000Dataset
-from src.data.augmentations import get_train_transforms, get_valid_transforms
+from pathlib import Path
+import sys
+
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
+
+from ml.src.data.dataset import HAM10000Dataset
+from ml.src.data.augmentations import get_train_transforms, get_valid_transforms
 
 # Test loading
 print("🧪 Testing Dataset Loading...\n")

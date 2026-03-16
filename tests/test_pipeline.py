@@ -2,10 +2,17 @@
 Test the complete data pipeline.
 """
 
+from pathlib import Path
+import sys
+
 import torch
-from src.data.augmentations import get_train_transforms, get_valid_transforms
-from src.data.dataloader import create_dataloaders
 import matplotlib.pyplot as plt
+
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
+
+from ml.src.data.augmentations import get_train_transforms, get_valid_transforms
+from ml.src.data.dataloader import create_dataloaders
 
 
 def test_pipeline():
@@ -42,7 +49,7 @@ def test_pipeline():
     labels = batch['label'].numpy()
     unique, counts = torch.unique(batch['label'], return_counts=True)
     
-    from src.data.dataset import HAM10000Dataset
+    from ml.src.data.dataset import HAM10000Dataset
     for label, count in zip(unique, counts):
         class_name = HAM10000Dataset.IDX_TO_CLASS[label.item()]
         print(f"   {class_name:6s}: {count:2d} samples")

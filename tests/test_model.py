@@ -1,7 +1,14 @@
 """Test model creation and forward pass."""
 
+from pathlib import Path
+import sys
+
 import torch
-from src.models.cnn_model import create_model
+
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
+
+from ml.src.models.cnn_model import create_model
 
 
 def test_model():

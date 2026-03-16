@@ -1,9 +1,16 @@
 """Test loss functions and metrics."""
 
+from pathlib import Path
+import sys
+
 import torch
-from src.models.loss import FocalLoss, create_loss_function
-from src.models.metrics import MetricsCalculator
-from src.data.dataset import HAM10000Dataset
+
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
+
+from ml.src.models.loss import FocalLoss, create_loss_function
+from ml.src.models.metrics import MetricsCalculator
+from ml.src.data.dataset import HAM10000Dataset
 
 
 def test_focal_loss():

@@ -1,13 +1,14 @@
 # 🔬 DermaVision — AI-Powered Skin Lesion Classification
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.9+-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/PyTorch-2.0+-red.svg" alt="PyTorch">
-  <img src="https://img.shields.io/badge/FastAPI-0.100+-green.svg" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Python-3.12-blue.svg" alt="Python">
+  <img src="https://img.shields.io/badge/PyTorch-2.x-red.svg" alt="PyTorch">
+  <img src="https://img.shields.io/badge/FastAPI-0.1x-green.svg" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Next.js-14-black.svg" alt="Next.js">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
 </p>
 
-> A deep learning pipeline for automated classification of dermatological conditions from clinical images, built on the HAM10000 dataset using EfficientNet-B3 with Grad-CAM explainability.
+> A full-stack monorepo for automated classification of dermatological conditions from clinical images, built on the HAM10000 dataset using EfficientNet-B3, with Grad-CAM explainability and a modern Next.js frontend.
 
 ---
 
@@ -60,23 +61,37 @@ DermaVision leverages a fine-tuned **EfficientNet-B3** model to classify skin le
 
 ## 📁 Project Structure
 
+Monorepo layout:
+
 ```
 dermavision/
-├── config/                 # Configuration files
-├── data/                   # Dataset (raw, processed, metadata)
-├── notebooks/              # Jupyter notebooks for EDA & analysis
-├── src/                    # Source code
-│   ├── data/               # Dataset & augmentation pipeline
-│   ├── models/             # Model architecture, loss, metrics
-│   ├── training/           # Training loop & callbacks
-│   ├── inference/          # Prediction & uncertainty
-│   └── visualization/      # Grad-CAM & plotting
-├── api/                    # FastAPI REST API
-├── ui/                     # Streamlit web interface
-├── models/                 # Saved model weights
-├── logs/                   # Training logs & TensorBoard
-├── tests/                  # Unit tests
-└── scripts/                # Utility scripts
+├── frontend/               # Next.js 14 UI (TypeScript + Tailwind)
+│   ├── app/                # App router pages & layout
+│   ├── components/         # Hero, scanner, results, dashboard, effects
+│   ├── lib/                # Frontend utilities (API helpers, animations)
+│   └── public/             # Static assets
+├── backend/                # FastAPI inference server
+│   ├── app/
+│   │   ├── main.py         # FastAPI app, /health, /model-info, /predict
+│   │   ├── endpoints/      # Modular endpoints
+│   │   └── schemas.py      # Pydantic schemas
+│   └── run.py              # Uvicorn entrypoint
+├── ml/                     # ML training & core inference code
+│   ├── config/             # YAML / JSON config
+│   ├── src/
+│   │   ├── data/           # Dataset & augmentations (HAM10000)
+│   │   ├── models/         # CNN model, loss functions, metrics
+│   │   ├── training/       # Trainer, callbacks, utilities
+│   │   ├── inference/      # Predictor, uncertainty
+│   │   └── visualization/  # Grad-CAM & plotting
+│   ├── scripts/            # train, evaluate, export_onnx, etc.
+│   ├── notebooks/          # EDA & results analysis
+│   ├── models/             # Saved model weights (e.g. best_model.pth)
+│   └── logs/               # Training logs & TensorBoard
+├── data/                   # Dataset (raw, processed, metadata.csv)
+├── tests/                  # Python test suite (data, model, pipeline, API)
+├── requirements.txt        # Python dependencies
+└── Dockerfile              # Containerization (API)
 ```
 
 ---
@@ -89,7 +104,7 @@ dermavision/
 - CUDA 11.8+ (for GPU training)
 - Docker (optional, for containerized deployment)
 
-### Installation
+### Installation (backend + ML)
 
 ```bash
 # Clone the repository
@@ -101,18 +116,28 @@ python -m venv venv
 source venv/bin/activate  # Linux/macOS
 # venv\Scripts\activate   # Windows
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
+```
+
+### Frontend (Next.js) setup
+
+```bash
+cd frontend
+npm install
 ```
 
 ### Dataset Setup
 
 ```bash
-# Download HAM10000 dataset
-python scripts/download_data.py
+# From repo root
+source venv/bin/activate
+
+# Download & preprocess HAM10000 dataset
+python ml/scripts/download_data.py
 
 # Verify data integrity
-python -m pytest tests/test_data.py -v
+pytest tests/test_data.py -v
 ```
 
 ---
@@ -120,39 +145,73 @@ python -m pytest tests/test_data.py -v
 ## 🏋️ Training
 
 ```bash
-# Start training with default config
-python scripts/train.py
+source venv/bin/activate
+
+# Start training with default hyperparameters
+python ml/scripts/train.py
 
 # Monitor with TensorBoard
-tensorboard --logdir logs/tensorboard
+tensorboard --logdir ml/logs/tensorboard
 
-# Custom training
-python scripts/train.py --config config/config.yaml --epochs 50 --batch_size 32
+# Example: custom config / options (if you wire CLI flags)
+# python ml/scripts/train.py --config ml/config/config.yaml --epochs 50 --batch_size 32
 ```
 
 ---
 
-## 🔮 Inference & API
+## 🔮 Inference, API & Frontend
 
-### FastAPI Server
+### FastAPI backend
 
-```bash
-# Start the API server
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-
-# Health check
-curl http://localhost:8000/health
-
-# Predict
-curl -X POST http://localhost:8000/predict \
-  -F "file=@path/to/skin_image.jpg"
-```
-
-### Streamlit UI
+From the repo root:
 
 ```bash
-streamlit run ui/app.py
+source venv/bin/activate
+python backend/run.py
 ```
+
+This starts the API on `http://localhost:8000`.
+
+- **Swagger docs**: `http://localhost:8000/docs`
+- **Health check**:
+
+  ```bash
+  curl http://localhost:8000/health
+  ```
+
+- **Model info**:
+
+  ```bash
+  curl http://localhost:8000/model-info
+  ```
+
+- **Single-image prediction**:
+
+  ```bash
+  curl -X POST "http://localhost:8000/predict?include_gradcam=true" \
+    -F "file=@path/to/skin_image.jpg"
+  ```
+
+The `/predict` response includes the predicted class, confidence, uncertainty flag, and an optional Grad-CAM overlay encoded as base64.
+
+### Next.js frontend (primary UI)
+
+From the repo root:
+
+```bash
+cd frontend
+npm run dev
+```
+
+- App URL: `http://localhost:3000`
+- The frontend:
+  - Lets you upload a dermoscopic image
+  - Sends it to the backend `/predict` endpoint
+  - Renders prediction, confidence, class probabilities, and Grad-CAM heatmap
+
+By default, the frontend points to the local backend:
+
+- `NEXT_PUBLIC_API_BASE_URL` (optional): if absent, it falls back to `http://localhost:8000`.
 
 ### Docker Deployment
 
@@ -165,14 +224,16 @@ docker run -p 8000:8000 dermavision
 
 ## 📊 Results
 
-| Metric | Value |
-|--------|-------|
-| Accuracy | TBD |
-| Weighted F1 | TBD |
-| Melanoma Sensitivity | TBD |
-| AUC-ROC (macro) | TBD |
+| Metric                 | Value  |
+|------------------------|--------|
+| Train Accuracy         | 0.8558 |
+| Train F1 (weighted)    | 0.8492 |
+| Val Accuracy           | 0.6214 |
+| Val F1 (weighted)      | 0.6803 |
+| Best Val F1            | 0.7155 |
+| Melanoma Sensitivity   | 0.8739 |
 
-> Results will be populated after training on the full HAM10000 dataset.
+> These metrics are from the current best checkpoint (`ml/models/best_model.pth`) trained on HAM10000; you can update them after future training runs.
 
 ---
 
