@@ -177,7 +177,7 @@ def main():
         scheduler=scheduler
     )
     
-    print("\n🎉 Training complete! Check the 'ml/models/' directory for checkpoints.")
+    print("\nTraining complete! Check the 'ml/models/' directory for checkpoints.")
 
 
 if __name__ == '__main__':
