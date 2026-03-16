@@ -47,7 +47,7 @@ class PredictionResponse(BaseModel):
     uncertainty_message: str = Field(
         ...,
         description="Human-readable uncertainty status",
-        examples=["✅ Prediction confident."],
+        examples=["Prediction confident."],
     )
 
 
