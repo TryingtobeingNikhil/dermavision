@@ -60,7 +60,7 @@ def download_ham10000():
             print("📂 Extracting files to processed directory...")
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(processed_dir)
-            print("✅ Extraction complete!\n")
+            print("Extraction complete!\n")
         
         # Process metadata
         metadata_files = list(processed_dir.glob("*metadata*")) + list(raw_dir.glob("*metadata*"))
