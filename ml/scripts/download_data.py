@@ -65,7 +65,7 @@ def download_ham10000():
         # Process metadata
         metadata_files = list(processed_dir.glob("*metadata*")) + list(raw_dir.glob("*metadata*"))
         if metadata_files:
-            print("📊 Processing metadata splits...")
+            print("Processing metadata splits...")
             df = pd.read_csv(metadata_files[0])
             
             # Add train/val/test splits (80/10/10)
