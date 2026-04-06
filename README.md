@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
 </p>
 
-> A full-stack monorepo for automated classification of dermatological conditions from clinical images, built on the HAM10000 dataset using EfficientNet-B3, with Grad-CAM explainability and a modern Next.js frontend.
+> A full-stack monorepo for automated classification of dermatological conditions from clinical images, built on the HAM10000 dataset using EfficientNet-B3,with Grad-CAM explainability and a modern Next.js frontend.
 
 ---
 
