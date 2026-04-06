@@ -34,7 +34,7 @@ def download_ham10000():
     print("Downloading HAM10000 dataset from Kaggle...")
     print("This may take 5-10 minutes depending on your connection.\n")
     
-    # Kaggle dataset identifier...
+    # Kaggle dataset identifier..
     dataset = "kmader/skin-cancer-mnist-ham10000"
     
     try:
@@ -49,7 +49,7 @@ def download_ham10000():
                 [kaggle_path, "datasets", "download", "-d", dataset, "-p", str(raw_dir)],
                 check=True
             )
-            print("✅ Download complete!\n")
+            print("Download complete!\n")
         else:
             print("✅ Dataset archive already exists or is extracted.\n")
         
