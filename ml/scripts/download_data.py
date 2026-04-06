@@ -91,7 +91,7 @@ def download_ham10000():
         return True
         
     except subprocess.CalledProcessError:
-        print("❌ Error: Kaggle API not configured or dataset download failed.")
+        print("Error: Kaggle API not configured or dataset download failed.")
         print("\n🔧 To fix this:")
         print("1. Install Kaggle API: pip install kaggle")
         print("2. Get API credentials from https://www.kaggle.com/settings")
