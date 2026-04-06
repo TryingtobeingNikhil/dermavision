@@ -21,7 +21,7 @@ from sklearn.model_selection import train_test_split
 def download_ham10000():
     """Download HAM10000 dataset from Kaggle."""
     
-    # Define paths
+    # Define paths...
     project_root = Path(__file__).parent.parent
     data_dir = project_root / "data"
     raw_dir = data_dir / "raw"
@@ -34,7 +34,7 @@ def download_ham10000():
     print("Downloading HAM10000 dataset from Kaggle...")
     print("This may take 5-10 minutes depending on your connection.\n")
     
-    # Kaggle dataset identifier
+    # Kaggle dataset identifier...
     dataset = "kmader/skin-cancer-mnist-ham10000"
     
     try:
