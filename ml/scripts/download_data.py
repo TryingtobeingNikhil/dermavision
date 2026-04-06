@@ -108,7 +108,7 @@ if __name__ == "__main__":
     success = download_ham10000()
     
     if success:
-        print("\n🎉 Dataset ready for training!")
+        print("\n Dataset ready for training!")
     else:
-        print("\n⚠️  Manual download needed. Visit:")
+        print("\n Manual download needed. Visit:")
         print("   https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000")
