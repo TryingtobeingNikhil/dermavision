@@ -100,7 +100,7 @@ def download_ham10000():
         return False
     
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         return False
 
 
