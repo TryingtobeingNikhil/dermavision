@@ -83,7 +83,7 @@ def download_ham10000():
             final_df = pd.concat([train_df, val_df, test_df]).reset_index(drop=True)
             final_df.to_csv(data_dir / "metadata.csv", index=False)
             
-            print(f"\n📊 Dataset splits saved to {data_dir / 'metadata.csv'}:")
+            print(f"\n Dataset splits saved to {data_dir / 'metadata.csv'}:")
             print(f"   Train: {len(train_df):,} images")
             print(f"   Val:   {len(val_df):,} images")
             print(f"   Test:  {len(test_df):,} images")
