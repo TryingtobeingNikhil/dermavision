@@ -55,7 +55,7 @@ def download_ham10000():
         
         # Unzip the dataset entirely to processed dir
         if list(processed_dir.glob("*.jpg")):
-             print("✅ Extracted images already exist in processed dir.\n")
+             print(" Extracted images already exist in processed dir.\n")
         elif zip_path.exists():
             print("📂 Extracting files to processed directory...")
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
