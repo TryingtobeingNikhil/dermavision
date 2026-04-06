@@ -51,7 +51,7 @@ def download_ham10000():
             )
             print("Download complete!\n")
         else:
-            print("✅ Dataset archive already exists or is extracted.\n")
+            print("Dataset archive already exists or is extracted.\n")
         
         # Unzip the dataset entirely to processed dir
         if list(processed_dir.glob("*.jpg")):
